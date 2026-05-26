@@ -14,28 +14,22 @@ pipeline {
         }
 
         stage('Maven Build') {
-            steps {
-                sh 'mvn clean compile'
-            }
-        }
+    steps {
+        bat 'mvn clean compile'
+    }
+}
 
-        stage('PMD Code Check') {
-            steps {
-                sh 'mvn pmd:pmd'
-            }
-            post {
-                always {
-                    // 发布 PMD 报告（可选插件支持）
-                    publishPMD issuesPattern: 'target/pmd.xml'
-                }
-            }
-        }
+stage('PMD Code Check') {
+    steps {
+        bat 'mvn pmd:pmd'
+    }
+}
 
-        stage('Run Tests') {
-            steps {
-                sh 'mvn test'
-            }
-        }
+stage('Run Tests') {
+    steps {
+        bat 'mvn test'
+    }
+}
 
         stage('Generate Test Report') {
             steps {
@@ -51,8 +45,8 @@ pipeline {
 
         stage('Generate JavaDoc & Package') {
             steps {
-                sh 'mvn javadoc:jar'   // 生成包含 JavaDoc 的 JAR 包
-                sh 'mvn package'       // 生成可执行 JAR（如 spring-boot:repackage）
+                bat 'mvn javadoc:jar'   // 生成包含 JavaDoc 的 JAR 包
+                bat 'mvn package'       // 生成可执行 JAR（如 spring-boot:repackage）
             }
         }
     }
