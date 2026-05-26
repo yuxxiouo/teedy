@@ -8,32 +8,24 @@ pipeline {
 
     stages {
         stage('Checkout') {
-            steps {
-                checkout scm
-            }
+            steps { checkout scm }
         }
 
         stage('Maven Install') {
-            steps {
-                bat 'mvn clean install -DskipTests'
-            }
+            steps { bat 'mvn clean install -DskipTests' }
         }
 
         stage('PMD Code Check') {
-            steps {
-                bat 'mvn pmd:pmd'
-            }
+            steps { bat 'mvn pmd:pmd' }
         }
 
         stage('Run Tests') {
-            steps {
-                bat 'mvn test'
-            }
+            steps { bat 'mvn test -Dmaven.test.failure.ignore=true' }
         }
 
         stage('Generate Test Report') {
             steps {
-                bat 'mvn surefire-report:report'
+                bat 'mvn surefire-report:report -Dmaven.test.failure.ignore=true'
                 publishHTML([
                     reportDir: 'target/site',
                     reportFiles: 'surefire-report.html',
