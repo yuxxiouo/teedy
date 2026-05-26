@@ -2,8 +2,8 @@
 pipeline {
     agent any  // 使用任意可用节点
     tools {
-        maven 'Maven3.8.1'  // Jenkins中配置的Maven工具名称
-        jdk 'JDK17'      // Jenkins中配置的JDK名称
+        maven 'Maven-3.8.1'  // Jenkins中配置的Maven工具名称
+        jdk 'JDK-17'      // Jenkins中配置的JDK名称
     }
     stages {
         // 1. 拉取代码（SCM已配置，自动执行）
