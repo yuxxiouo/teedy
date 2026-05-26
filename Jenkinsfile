@@ -25,14 +25,14 @@ pipeline {
 
         stage('Generate Test Report') {
             steps {
-                bat 'mvn surefire-report:report -Dmaven.test.failure.ignore=true'
+                bat 'mvn surefire-report:report-only'
                 publishHTML(target: [
     allowMissing: false,
     alwaysLinkToLastBuild: false,
     keepAll: true,
-    reportDir: 'target/site',
+    reportDir: 'target/site/',
     reportFiles: 'surefire-report.html',
-    reportName: 'Test Report'
+    reportName: 'Maven Surefire Reportt'
 ])
             }
         }
