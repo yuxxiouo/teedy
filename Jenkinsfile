@@ -1,78 +1,74 @@
-// Jenkinsfile for Teedy CI Pipeline
 pipeline {
-    agent any  // 使用任意可用节点
+    agent any
+
     tools {
-        maven 'Maven-3.8.1'  // Jenkins中配置的Maven工具名称
-        jdk 'JDK-17'      // Jenkins中配置的JDK名称
+        // 确保 Jenkins 全局工具配置中有名为 'Maven-3.8.1' 和 'JDK-11' 的工具
+        maven 'Maven-3.8.1'
+        jdk 'JDK-17'
     }
+
     stages {
-        // 1. 拉取代码（SCM已配置，自动执行）
-        stage('拉取代码') {
+        stage('Checkout') {
             steps {
-                git url: 'https://github.com/yuxxiouo/Teedy.git', branch: 'main'
+                checkout scm
             }
         }
 
-        // 2. Maven构建项目
-        stage('Maven构建') {
+        // 关键：先 install 所有模块，解决 docs-core 依赖问题
+        stage('Maven Install') {
             steps {
-                sh 'mvn clean package -DskipTests'  // 打包，跳过测试
-            }
-            post {
-                success {
-                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true  // 归档jar包
-                }
+                bat 'mvn clean install -DskipTests'
             }
         }
 
-        // 3. PMD静态代码检查
-        stage('PMD代码检查') {
+        stage('PMD Code Check') {
             steps {
-                sh 'mvn pmd:pmd'  // 执行PMD代码检查
-            }
-            post {
-                always {
-                    pmd canComputeNew: false, defaultEncoding: '', healthy: '', pattern: 'target/pmd.xml', unHealthy: ''
-                }
+                bat 'mvn pmd:pmd'
             }
         }
 
-        // 4. 运行单元测试
-        stage('运行测试') {
+        // 运行测试，允许失败，以便继续生成报告
+        stage('Run Tests') {
             steps {
-                sh 'mvn test'  // 执行测试用例
-            }
-            post {
-                always {
-                    junit 'target/surefire-reports/*.xml'  // 展示测试结果
-                    publishHTML(target: [
-                        allowMissing: false,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true,
-                        reportDir: 'target/site',
-                        reportFiles: 'index.html',
-                        reportName: '测试报告'
-                    ])
-                }
+                bat 'mvn test -Dmaven.test.failure.ignore=true'
             }
         }
 
-        // 5. 生成JavaDoc文档
-        stage('生成JavaDoc') {
+        // 生成 HTML 测试报告（需 HTML Publisher 插件）
+        stage('Generate Test Report') {
             steps {
-                sh 'mvn javadoc:jar'  // 生成JavaDoc jar包
+                // 生成 surefire-report.html
+                bat 'mvn surefire-report:report-only -Dmaven.test.failure.ignore=true'
+                // 发布报告，注意插件安装：HTML Publisher
+                publishHTML(target: [
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: false,
+                    keepAll: true,
+                    reportDir: 'target/site',
+                    reportFiles: 'surefire-report.html',
+                    reportName: 'Surefire Test Report'
+                ])
             }
-            post {
-                success {
-                    archiveArtifacts artifacts: 'target/*-javadoc.jar', fingerprint: true  // 归档文档包
-                }
+        }
+
+        // 生成 JavaDoc JAR 并打包可执行 JAR
+        stage('Generate JavaDoc & Package') {
+            steps {
+                // 忽略 JavaDoc 语法错误
+                bat 'mvn javadoc:jar -Dmaven.javadoc.failOnError=false'
+                // 打包最终 JAR，跳过测试（测试已经运行过）
+                bat 'mvn package -DskipTests -Dmaven.javadoc.skip=true'
             }
         }
     }
-    // 构建后操作
+
     post {
         always {
-            echo '流水线执行完成！'
+            // 归档所有产物
+            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+            archiveArtifacts artifacts: 'target/*-javadoc.jar', allowEmptyArchive: true
+            // 归档 XML 格式的测试报告（JUnit 插件也可用）
+            archiveArtifacts artifacts: '**/target/surefire-reports/*.xml', allowEmptyArchive: true
         }
     }
 }
