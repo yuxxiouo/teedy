@@ -6,6 +6,10 @@ pipeline {
         jdk 'JDK-17'          // 确保有 JDK 11
     }
 
+    stage('Clean local cache') {
+    steps {
+        bat 'rmdir /s /q "%USERPROFILE%\\.m2\\repository\\com\\sismics\\docs\\docs-core"'
+
     stages {
         stage('Checkout') {
             steps {
