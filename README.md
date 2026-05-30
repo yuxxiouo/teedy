@@ -23,7 +23,7 @@ A demo is available at [demo.teedy.io](https://demo.teedy.io)
 - "admin" login with "admin" password
 - "demo" login with "password" password 
 
-# Features
+# Features 
 
 - Responsive user interface
 - Optical character recognition
